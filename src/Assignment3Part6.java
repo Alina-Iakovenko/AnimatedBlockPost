@@ -1,30 +1,33 @@
-package com.shpp.p2p.cs.aiakovenko.assignment3;
-
+import acm.graphics.GLabel;
+import acm.graphics.GObject;
 import acm.graphics.GOval;
 import acm.graphics.GRect;
 import acm.util.RandomGenerator;
 import com.shpp.cs.a.graphics.WindowProgram;
 
 import java.awt.*;
-
-import static java.awt.Color.blue;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 /**
- * 5 sec long animation with 50+ frames
+ * 5 sec long animation with 50+ frames.
+ * Builds pyramid in green colors with a flag on top and show time from fullscale invasion.
+ * Then labels appear and star snowing.
  */
 public class Assignment3Part6 extends WindowProgram {
     /* General block */
-    public static final int APPLICATION_WIDTH = 1000;
-    public static final int APPLICATION_HEIGHT = 700;
-    long start;
+    public static final int APPLICATION_WIDTH = 800;
+    public static final int APPLICATION_HEIGHT = 525;
+    private static final double PAUSE_TIME = 1000.0 / 50;
+    private static final double PAUSE_TIME_FOR_SNOW = 10 / 50;
+    RandomGenerator rgen = RandomGenerator.getInstance();
 
 
     /* Pyramid block */
-    // The amount of time to pause between frames (48fps).
-    private static final double PAUSE_TIME = 1000.0 / 50;
-    static final int BRICK_HEIGHT = 40;
-    static final int BRICK_WIDTH = 70;
+    static final int BRICK_HEIGHT = 35;
+    static final int BRICK_WIDTH = 60;
     static final int BRICKS_IN_BASE = 9;
+    int totalBricks = (BRICKS_IN_BASE * (BRICKS_IN_BASE + 1)) / 2;
 
     /* Flag block */
     private static final int FLAG_WIDTH = BRICK_WIDTH * 2;
@@ -32,90 +35,34 @@ public class Assignment3Part6 extends WindowProgram {
     private static final int FLAGPOLE_HEIGHT = BRICK_HEIGHT * 3;
     int yFlagpole = APPLICATION_HEIGHT - BRICKS_IN_BASE * BRICK_HEIGHT - FLAGPOLE_HEIGHT;
 
-    /* Cycle block */
-    // The amount of time to pause between frames (48fps).
-    private static final double DAY_PAUSE_TIME = 700.0;
-    static final int DIAMETER = 50;
+    /* Label block */
+    private final Font COMIC_SANS = new Font("Comic Sans", Font.BOLD, 24);
+    private final Font COMIC_SANS_PLAIN = new Font("Comic Sans", Font.PLAIN, 18);
+    GLabel labelTime;
 
-    RandomGenerator rgen = RandomGenerator.getInstance();
+    /* Color block */ Color lighterGreen = new Color(68, 143, 102);
+    Color darkerGreen = new Color(31, 66, 47);
+    Color iceColdStare = new Color(190, 227, 252);
+    Color greySky = new Color(150, 175, 196);
 
     @Override
     public void run() {
-        start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
+        setBackground(iceColdStare);
+        buildPyramid();
+        putTheFlag();
+        setBackground(greySky);
+        addLabels();
         while (System.currentTimeMillis() - start < 5000) {
-            changeDayTime("day");
-            buildPyramid();
-            putTheFlag();
-            changeDayNight();
+            letItSnow();
         }
-        System.out.println(System.currentTimeMillis() - start);
-
-    }
-
-    /* Flag block */
-    private void putTheFlag() {
-//        pause(PAUSE_TIME);
-        add(putFlagpole());
-        drawFlag();
-    }
-
-    private GRect putFlagpole() {
-        GRect flagpole = new GRect(getWidth() / 2 - BRICK_WIDTH / 2, yFlagpole, 1, FLAG_HEIGHT);
-        flagpole.setFilled(true);
-        flagpole.setColor(Color.black);
-        flagpole.sendToFront();
-        return flagpole;
-    }
-
-    /**
-     * Paints a centered flag with 3 green vertical strips with the same width
-     */
-    private void drawFlag() {
-//        GRect flag = new GRect((getWidth()/2 - BRICK_WIDTH/2)-1, (yFlagpole - BRICK_HEIGHT*2)-1,
-//                FLAG_WIDTH, FLAG_HEIGHT+2);
-//        flag.setColor(Color.black);
-//        add(flag);
-        addColoredStrip("blue", 1);
-        addColoredStrip("yellow", 2);
-    }
-
-    /**
-     * Paints a horizontal strip
-     *
-     * @param color         determines the color of the strip
-     * @param numberOfStrip the position in the flag that determines x-coordinate
-     */
-    private void addColoredStrip(String color, int numberOfStrip) {
-        double xStrip = getWidth() / 2 - BRICK_WIDTH / 2;
-        double yStrip = yFlagpole - FLAG_HEIGHT;
-
-        switch (numberOfStrip) {
-            case 1:
-                break;
-            case 2:
-                yStrip = yFlagpole - FLAG_HEIGHT / 2;
-                break;
-        }
-
-        GRect strip = new GRect(xStrip, yStrip, FLAG_WIDTH, FLAG_HEIGHT / 2);
-        strip.setFilled(true);
-
-        switch (color) {
-            case "blue":
-                strip.setColor(blue);
-                break;
-            case "yellow":
-                strip.setColor(Color.yellow);
-                break;
-        }
-        add(strip);
-        strip.sendToFront();
+        add(createLabelTime());
+        System.out.println(System.currentTimeMillis() - start); // print info to check duration
     }
 
     /* Pyramid block */
-
     /**
-     * Builds a pyramid row by row
+     * Builds a dugout (pyramid) row by row
      */
     private void buildPyramid() {
         int bricksInRow = BRICKS_IN_BASE;
@@ -143,7 +90,10 @@ public class Assignment3Part6 extends WindowProgram {
         for (int i = 0; i < bricksInRow; i++) {
             add(moldBrick(xBrick, yRow));
             xBrick += BRICK_WIDTH;
+            labelTime = createLabelTime();
+            add(labelTime);
             pause(PAUSE_TIME);
+            remove(labelTime);
         }
     }
 
@@ -158,10 +108,11 @@ public class Assignment3Part6 extends WindowProgram {
         brick.setFilled(true);
         brick.setColor(Color.black);
         brick.setFillColor(nextGreenColor());
-        brick.sendToFront();
         return brick;
     }
-
+    /**
+     * Return a random color from green palette
+     */
     public Color nextGreenColor() {
         Color[] allowedColors = {new Color(41, 98, 72), //plantation
                 new Color(60, 138, 103), //virydian
@@ -179,72 +130,171 @@ public class Assignment3Part6 extends WindowProgram {
         return allowedColors[i];
     }
 
-    /* Cycle block */
+    /* Flag block */
+    /**
+     * Paints ukrainian flag on the top of the dugout (pyramid)
+     */
+    private void putTheFlag() {
+        pause(PAUSE_TIME);
+        add(drawFlagpole());
+        drawFlag();
+        pause(PAUSE_TIME);
+    }
+    /**
+     * Paints a flagpole
+     */
+    private GRect drawFlagpole() {
+        GRect flagpole = new GRect(getWidth() / 2 - BRICK_WIDTH / 2, yFlagpole, 1, FLAG_HEIGHT);
+        flagpole.setFilled(true);
+        flagpole.setColor(Color.black);
+        return flagpole;
+    }
+    /**
+     * Paints ukrainian flag
+     */
+    private void drawFlag() {
+        GRect strip;
+        double xStrip = getWidth() / 2 - BRICK_WIDTH / 2;
+        double yStrip = yFlagpole - FLAG_HEIGHT / 2;
 
-    private void changeDayTime(String string) {
-        GRect screen = new GRect(0, 0, APPLICATION_WIDTH, APPLICATION_HEIGHT);
-        screen.setBounds(0, 0, APPLICATION_WIDTH, APPLICATION_HEIGHT);
-
-        if (string.equalsIgnoreCase("day")) {
-            screen.setFilled(false);
-//            screen.setColor(Color.white);
-        } else if (string.equalsIgnoreCase("night")) {
-            screen.setFilled(true);
-            Color transparentGray = new Color(55f,55f,51f,1.00f);
-            screen.setColor(Color.darkGray);
+        for (int i = 0; i < 2; i++) {
+            strip = new GRect(xStrip, yStrip, FLAG_WIDTH, FLAG_HEIGHT / 2);
+            if (i == 0) {
+                strip.setColor(Color.yellow);
+            } else {
+                strip.setColor(Color.blue);
+            }
+            strip.setFilled(true);
+            add(strip);
+            yStrip -= FLAG_HEIGHT / 2;
         }
-        add(screen);
-//        screen.sendToBack();
     }
 
-    private void movePlanet(String string) {
-        int xPlanet = 0;
-        int yPlanet = getHeight() - DIAMETER;
 
-        double deltaX = 30;
-        double deltaY = 30;
-//        int deltaX = getWidth()/2/30;
-//        int deltaY = getHeight()/30;
+    /* Label block */
+    /**
+     * Add 2 main labels to the screen
+     */
+    void addLabels() {
+        GLabel label1 = createLabel("Our soldiers need", darkerGreen, getWidth() - 257, 220);
+        add(label1);
+        GLabel label1_1 = createLabel("more support now!", darkerGreen, getWidth() - 260, 250);
+        add(label1_1);
 
-        GOval planet = new GOval(xPlanet, yPlanet, DIAMETER, DIAMETER);
-        planet.setFilled(true);
-        if (string.equalsIgnoreCase("moon")) {
-            planet.setColor(Color.lightGray);
-        } else if (string.equalsIgnoreCase("sun")) {
-            planet.setColor(Color.yellow);
-        }
-        add(planet);
-
-        pause(DAY_PAUSE_TIME / 4);
-        planet.setLocation((getWidth() / 4 - DIAMETER / 2), getHeight() / 2);
-        pause(DAY_PAUSE_TIME / 4);
-        planet.setLocation((getWidth() / 2 - DIAMETER / 2), 0);
-        pause(DAY_PAUSE_TIME / 4);
-        planet.setLocation((getWidth() / 4 - DIAMETER / 2) * 3, getHeight() / 2);
-        pause(DAY_PAUSE_TIME / 4);
-        planet.setLocation((getWidth() - DIAMETER), getHeight() - DIAMETER);
-        pause(DAY_PAUSE_TIME / 4);
-        planet.setLocation(getWidth(), getHeight());
-
-
-//        while (xPlanet < 0 && yPlanet < 0) {
-//            xPlanet += deltaX;
-//            yPlanet -= deltaY;
-//            planet.move(xPlanet,yPlanet);
-//            pause(DAY_PAUSE_TIME/10);
-//        }
+        GLabel label2 = createLabel("It`s winter again...", darkerGreen, 60, 160);
+        add(label2);
+    }
+    /**
+     * Creates a label
+     */
+    private GLabel createLabel(String string, Color color, int x, int y) {
+        GLabel label = new GLabel(string, x, y);
+        label.setFont(COMIC_SANS);
+        label.setColor(color);
+        return label;
     }
 
-    private void changeDayNight() {
-        while (System.currentTimeMillis() - start < 5000) {
-            changeDayTime("day");
-            movePlanet("sun");
-            pause(DAY_PAUSE_TIME);
+    /**
+     * Creates a label with time from fullscale invasion started
+     */
+    private GLabel createLabelTime() {
+        GLabel label = createLabel(getTimeFromFullInvasion(), lighterGreen, 10, 30);
+        label.setFont(COMIC_SANS_PLAIN);
+        return label;
+    }
 
-            changeDayTime("night");
-            movePlanet("moon");
-            pause(DAY_PAUSE_TIME);
+    /**
+     * Calculates time from fullscale invasion started 3:40 24.02.2022)
+     */
+    private String getTimeFromFullInvasion() {
+        LocalDateTime startDate = LocalDateTime.of(2022, 2, 24, 3, 40);
+        LocalDateTime now = LocalDateTime.now();
+        Duration duration = Duration.between(startDate, now);
+
+        long days = duration.toDays();
+        long hours = duration.toHours() % 24;
+        long minutes = duration.toMinutes() % 60;
+        long seconds = duration.getSeconds() % 60;
+
+        String result = String.format("%d days %02d hours %02d minutes %02d seconds " + "passed from fullscale invasion", days, hours, minutes, seconds);
+        return result;
+    }
+
+
+    /* Snow block */
+    /**
+     * Return a random color from snow palette
+     */
+    public Color nextSnowColor() {
+        Color[] allowedColors = {new Color(239, 250, 255), //alice blue
+                new Color(226, 245, 254), //Wizard White
+                new Color(195, 234, 252), //Blue Hijab
+                new Color(188, 231, 251), //Arctic Paradise
+                new Color(158, 220, 249), //Ganon Blue
+                new Color(184, 207, 213), //Starlight Blue
+                new Color(190, 211, 217), //Wind Speed
+                new Color(139, 176, 187), //Kitchen Blue
+        };
+        int i = rgen.nextInt(0, 7);
+        return allowedColors[i];
+    }
+    /**
+     * Creates a snowflake in random color from snow palette,
+     * that appears in point at the top of the screen with random x-coordinate
+     */
+    private GOval makeSnowflake() {
+        double x = rgen.nextDouble(rgen.nextInt(1, getWidth()));
+        GOval snowflake = new GOval(x, 25, 2, 2);
+        snowflake.setFilled(true);
+        snowflake.setColor(nextSnowColor());
+        add(snowflake);
+        return snowflake;
+    }
+    /**
+     * Creates animation with snowing and counting seconds
+     */
+    private void letItSnow() {
+        GOval[] snow = new GOval[5];
+        for (int i = 0; i < snow.length; i++) {
+            labelTime = createLabelTime();
+            add(labelTime);
+            snow[i] = makeSnowflake();
+            GOval snowFlake = snow[i]; //variable for the easier reading code below
+
+            // 1 of 5 snowflake moves only ones to random point on screen
+            if (i % 5 == 0) {
+                snowFlake.setLocation(rgen.nextDouble(0, getWidth()), rgen.nextDouble(25, getHeight()));
+            }
+            // other 4 of 5 snowflakes moves till it reaches an obstacle
+            else {
+                fallSnowFlakeTillObstacle(snowFlake);
+            }
+            remove(labelTime); // for changing seconds
+        }
+    }
+
+    /**
+     * Moves snowflake with different speed on different trajectories
+     * till it reaches the flag, the ground or the dugout
+     */
+    private void fallSnowFlakeTillObstacle(GOval snowFlake) {
+        double dx = rgen.nextDouble(-5, 5); //for different trajectores
+        double dy = rgen.nextDouble(1, 10); //for different speed
+        // sets limits for moving in screen bounds
+        while ((snowFlake.getX() < getWidth() && snowFlake.getX() > -10) && snowFlake.getY() < getHeight() - 10) {
+            //checks if there is the dugout or flag
+            GObject comp = getElementAt(snowFlake.getX(), snowFlake.getY());
+            if (comp instanceof GRect) {
+                break;
+            } else {
+                snowFlake.move(dx, dy);
+            }
+            pause(PAUSE_TIME_FOR_SNOW);
         }
     }
 }
+
+
+
+
 

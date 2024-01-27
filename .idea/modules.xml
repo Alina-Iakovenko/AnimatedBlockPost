@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/AnimatedBlockPost.iml" filepath="$PROJECT_DIR$/AnimatedBlockPost.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../sh++/computerScience/AnimatedBlockPost/AnimatedBlockPost.iml" filepath="$PROJECT_DIR$/../../../sh++/computerScience/AnimatedBlockPost/AnimatedBlockPost.iml" />
     </modules>
   </component>
 </project>

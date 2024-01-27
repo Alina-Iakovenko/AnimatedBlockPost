@@ -7,16 +7,22 @@ import com.shpp.cs.a.graphics.WindowProgram;
 import java.awt.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Labels extends WindowProgram implements Runnable {
     /* Label block */
     private final Font COMIC_SANS = new Font("Comic Sans", Font.BOLD, 24);
     private final Font COMIC_SANS_PLAIN = new Font("Comic Sans", Font.PLAIN, 18);
+    private final AtomicBoolean stopExecution;
     GLabel labelTime;
     Color lighterGreen = new Color(68, 143, 102);
     Color darkerGreen = new Color(31, 66, 47);
     static final double PAUSE_TIME = 10.0 / 50;
     GCanvas canvas = Animation.canvas;
+
+    public Labels(AtomicBoolean stopExecution) {
+        this.stopExecution = stopExecution;
+    }
 
     @Override
     public void run() {
@@ -35,7 +41,7 @@ public class Labels extends WindowProgram implements Runnable {
 
         GLabel label2 = createLabel("It`s winter again...", darkerGreen, 60, 160);
         canvas.add(label2);
-        while (Animation.labelsThread.isAlive()) {
+        while (!stopExecution.get()) {
             labelTime = createLabelTime();
             canvas.add(labelTime);
             pause(PAUSE_TIME);

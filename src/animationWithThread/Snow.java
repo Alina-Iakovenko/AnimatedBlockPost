@@ -5,15 +5,24 @@ import acm.util.RandomGenerator;
 import com.shpp.cs.a.graphics.WindowProgram;
 
 import java.awt.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Snow extends WindowProgram implements Runnable{
     static final double PAUSE_TIME_FOR_SNOW = 1 / 5; // чому ця пауза працює не атк само як 0,2 ???
+    private final AtomicBoolean stopExecution;
     RandomGenerator rgen = RandomGenerator.getInstance();
     GCanvas canvas = Animation.canvas;
 
+
+    public Snow(AtomicBoolean stopExecution) {
+        this.stopExecution = stopExecution;
+    }
+
+
     @Override
     public void run() {
-        while (Animation.snowThread.isAlive()) {
+
+        while (!stopExecution.get()) {
             letItSnow();
         }
     }

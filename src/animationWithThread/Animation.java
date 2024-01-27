@@ -3,6 +3,8 @@ package animationWithThread;
 import acm.graphics.GCanvas;
 import com.shpp.cs.a.graphics.WindowProgram;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 /**
  * 5 sec long animation with 50+ frames.
@@ -14,6 +16,8 @@ public class Animation extends WindowProgram {
     public static final int APPLICATION_WIDTH = 800;
     public static final int APPLICATION_HEIGHT = 525;
     static final long ANIMATION_DURATION = 5000;
+    static long startTime;
+
     static GCanvas canvas;
     static Thread pyramidThread;
     static Thread labelsThread;
@@ -21,11 +25,12 @@ public class Animation extends WindowProgram {
 
     @Override
     public void run() {
-        long startTime = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
         canvas = getGCanvas();
+        AtomicBoolean stopExecution = new AtomicBoolean(false);
         pyramidThread = new Thread(new Pyramid());
-        labelsThread = new Thread(new Labels());
-        snowThread = new Thread(new Snow());
+        labelsThread = new Thread(new Labels(stopExecution));
+        snowThread = new Thread(new Snow(stopExecution));
 
         pyramidThread.setPriority(1);
         labelsThread.setPriority(2);
@@ -35,12 +40,11 @@ public class Animation extends WindowProgram {
         labelsThread.start();
         snowThread.start();
 
-        while (System.currentTimeMillis() - startTime < ANIMATION_DURATION) {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
         }
-
-        pyramidThread.interrupt();
-        labelsThread.interrupt();
-        snowThread.interrupt();
+        stopExecution.set(true);
 
         System.out.println((System.currentTimeMillis() - startTime) + " passed");
     }
